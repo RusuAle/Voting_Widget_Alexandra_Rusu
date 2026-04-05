@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Voting Widget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%; height: 100%;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .widget-wrap {
+            width: 100vw; height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: clamp(0.5rem, 2vw, 1.5rem);
+        }
+
+        .invalid-state {
+            text-align: center; padding: 2rem;
+            animation: fadeIn 0.8s ease;
+        }
+        .invalid-icon { font-size: clamp(2rem, 8vw, 4rem); margin-bottom: 1rem; }
+        .invalid-title {
+            font-size: clamp(0.9rem, 3vw, 1.3rem);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .poll-card {
+            width: 100%; max-width: 480px;
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: clamp(12px, 3vw, 20px);
+            padding: clamp(0.8rem, 3vw, 1.5rem);
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+
+        .poll-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: clamp(0.5rem, 2vw, 1rem);
+        }
+        .poll-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #43E97B;
+            box-shadow: 0 0 10px #43E97B;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+
+        .poll-title {
+            font-size: clamp(0.85rem, 3vw, 1.2rem);
+            font-weight: 700; color: #fff; flex: 1;
+        }
+
+        .total-votes {
+            font-size: clamp(0.65rem, 2vw, 0.8rem);
+            color: rgba(255,255,255,0.5);
+        }
+
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+
+        .option-item {
+            position: relative; border-radius: 10px;
+            overflow: hidden; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: clamp(0.4rem, 1.5vw, 0.7rem) clamp(0.6rem, 2vw, 1rem);
+            animation: fadeIn 0.5s ease both;
+        }
+
+        .option-bar {
+            position: absolute; left: 0; top: 0; height: 100%;
+            background: linear-gradient(90deg, rgba(108,99,255,0.4), rgba(167,139,250,0.2));
+            border-radius: 10px; transition: width 1s cubic-bezier(.4,0,.2,1);
+        }
+
+        .option-content {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .option-text { font-size: clamp(0.7rem, 2.5vw, 0.95rem); font-weight: 500; }
+
+        .option-meta {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: clamp(0.6rem, 2vw, 0.8rem);
+        }
+
+        .vote-count {
+            background: rgba(108,99,255,0.3);
+            border: 1px solid rgba(108,99,255,0.5);
+            padding: 0.15rem 0.5rem; border-radius: 20px;
+            color: #a78bfa; font-weight: 600;
+        }
+
+        .pct { color: rgba(255,255,255,0.6); }
+
+        .divider {
+            height: 1px; background: rgba(255,255,255,0.1);
+            margin: clamp(0.5rem, 1.5vw, 0.8rem) 0;
+        }
+
+        .qr-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .vote-prompt {
+            flex: 1;
+        }
+        .vote-prompt p {
+            font-size: clamp(0.6rem, 2vw, 0.75rem);
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.3rem;
+        }
+        .vote-link {
+            display: inline-block;
+            font-size: clamp(0.65rem, 2vw, 0.8rem);
+            color: #a78bfa; text-decoration: none;
+            background: rgba(108,99,255,0.2);
+            border: 1px solid rgba(108,99,255,0.4);
+            padding: 0.3rem 0.7rem; border-radius: 8px;
+            transition: all 0.3s ease;
+            word-break: break-all;
+        }
+        .vote-link:hover { background: rgba(108,99,255,0.4); }
+
+        .qr-img {
+            width: clamp(50px, 12vw, 80px);
+            height: clamp(50px, 12vw, 80px);
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .no-options {
+            text-align: center; color: rgba(255,255,255,0.4);
+            font-size: 0.85rem; padding: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="widget-wrap">
+
+    <div th:if="${poll == null or !poll.initialized}" class="invalid-state">
+        <div class="invalid-icon"></div>
+        <p class="invalid-title">Invalid or uninitialized voting poll</p>
+        <p style="font-size:0.75rem; color:rgba(255,255,255,0.35); margin-top:0.5rem;" th:text="'ID: ' + ${pollId}"></p>
+    </div>
+
+    <div th:if="${poll != null and poll.initialized}" class="poll-card">
+        <div class="poll-header">
+            <div class="poll-dot"></div>
+            <span class="poll-title" th:text="${poll.title != null ? poll.title : 'Untitled Poll'}"></span>
+            <span class="total-votes" th:text="${totalVotes} + ' votes'"></span>
+        </div>
+
+        <ul class="options-list" th:if="${!poll.options.isEmpty()}">
+            <li class="option-item" th:each="opt, iterStat : ${poll.options}"
+                th:style="'animation-delay:' + ${iterStat.index * 0.1} + 's'">
+                <div class="option-bar" th:style="'width:' + ${poll.totalVotes > 0 ? opt.getPercentage(poll.totalVotes) : 0} + '%'"></div>
+                <div class="option-content">
+                    <span class="option-text" th:text="${opt.optionText}"></span>
+                    <div class="option-meta">
+                        <span class="pct"
+                              th:text="${poll.totalVotes > 0 ? #numbers.formatDecimal(opt.getPercentage(poll.totalVotes), 1, 1) + '%' : '0%'}"></span>
+                        <span class="vote-count" th:text="${opt.votes}"></span>
+                    </div>
+                </div>
+            </li>
+        </ul>
+
+        <p class="no-options" th:if="${poll.options.isEmpty()}">No options yet. Configure via admin.</p>
+
+        <div class="divider"></div>
+
+        <div class="qr-row">
+            <div class="vote-prompt">
+                <p>Scan to vote or visit:</p>
+                <a class="vote-link" th:href="${voteUrl}" th:text="${voteUrl}" target="_blank"></a>
+            </div>
+            <img th:if="${qrCode != null and !qrCode.isEmpty()}"
+                 class="qr-img"
+                 th:src="'data:image/png;base64,' + ${qrCode}"
+                 alt="QR Code"/>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    setInterval(() => {
+        location.reload();
+    }, 10000);
+</script>
+</body>
+</html>

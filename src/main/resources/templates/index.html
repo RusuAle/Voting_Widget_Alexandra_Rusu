@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Voting Widget Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+        :root { --primary: #6C63FF; --secondary: #FF6584; --accent: #43E97B; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; display: flex; align-items: center;
+            justify-content: center; color: #fff; overflow: hidden;
+        }
+
+        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; animation: float 8s ease-in-out infinite; }
+        .orb1 { width: 400px; height: 400px; background: #6C63FF; top: -100px; left: -100px; }
+        .orb2 { width: 300px; height: 300px; background: #FF6584; bottom: -100px; right: -100px; animation-delay: 3s; }
+        .orb3 { width: 250px; height: 250px; background: #43E97B; top: 50%; left: 50%; animation-delay: 6s; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-30px); } }
+
+        .container { position: relative; z-index: 1; text-align: center; padding: 2rem; max-width: 700px; width: 100%; }
+
+        .logo {
+            font-size: 3.5rem; font-weight: 800; margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #6C63FF, #FF6584, #43E97B);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+
+        .subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.6); margin-bottom: 3rem; }
+
+        .card {
+            background: rgba(255,255,255,0.07); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 24px;
+            padding: 2.5rem; margin-bottom: 1.5rem;
+        }
+        .card h2 { font-size: 1.3rem; color: rgba(255,255,255,0.9); margin-bottom: 1.5rem; }
+
+        .input-group { display: flex; gap: 0.75rem; }
+
+        input[type="text"] {
+            flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 0.85rem 1.2rem; color: #fff; font-size: 1rem; outline: none;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]::placeholder { color: rgba(255,255,255,0.4); }
+        input[type="text"]:focus { border-color: #6C63FF; box-shadow: 0 0 0 3px rgba(108,99,255,0.3); background: rgba(255,255,255,0.15); }
+
+        .btn {
+            padding: 0.85rem 1.8rem; border: none; border-radius: 12px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; transition: all 0.3s ease;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .btn-primary { background: linear-gradient(135deg, #6C63FF, #a78bfa); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.5); }
+
+        .quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+        .quick-link {
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+            padding: 1.2rem 1rem; background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+            text-decoration: none; color: #fff; transition: all 0.3s ease; cursor: pointer;
+        }
+        .quick-link:hover { background: rgba(255,255,255,0.13); transform: translateY(-3px); border-color: rgba(255,255,255,0.3); }
+        .quick-link .icon { font-size: 1.8rem; }
+        .quick-link .label { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+
+        .badge {
+            display: inline-block; padding: 0.3rem 0.8rem;
+            background: rgba(108,99,255,0.3); border: 1px solid rgba(108,99,255,0.5);
+            border-radius: 20px; font-size: 0.75rem; color: #a78bfa; margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 500px) { .input-group { flex-direction: column; } .quick-links { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="bg-orbs">
+    <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+</div>
+<div class="container">
+    <div class="logo">VoteWidget</div>
+    <p class="subtitle">Saint-Gobain — Digital Panel Voting Service</p>
+    <span class="badge"> Interactive • Real-time • Embeddable</span>
+
+    <div class="card">
+        <h2>Access a Poll</h2>
+        <div class="input-group">
+            <input type="text" id="pollIdInput" placeholder="Enter poll ID (e.g. my-poll or a UUID)"/>
+            <button class="btn btn-primary" onclick="navigate()">Go →</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2> Quick Access</h2>
+        <div class="quick-links">
+            <div class="quick-link" onclick="goTo('widget')">
+                <span class="icon"></span><span class="label">Widget View</span>
+            </div>
+            <div class="quick-link" onclick="goTo('vote')">
+                <span class="icon"></span><span class="label">Vote Page</span>
+            </div>
+            <div class="quick-link" onclick="goTo('admin')">
+                <span class="icon"></span><span class="label">Admin Panel</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getPollId() { return document.getElementById('pollIdInput').value.trim(); }
+    function navigate() {
+        const id = getPollId();
+        if (!id) { document.getElementById('pollIdInput').focus(); return; }
+        window.location.href = '/' + encodeURIComponent(id);
+    }
+    function goTo(type) {
+        const id = getPollId();
+        if (!id) { document.getElementById('pollIdInput').focus(); return; }
+        const path = type === 'widget' ? '' : '/' + type;
+        window.location.href = '/' + encodeURIComponent(id) + path;
+    }
+    document.getElementById('pollIdInput').addEventListener('keydown', e => { if (e.key === 'Enter') navigate(); });
+</script>
+</body>
+</html>

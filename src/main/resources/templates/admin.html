@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d1a2e 100%);
+            min-height: 100vh; color: #fff; padding: 1.5rem;
+        }
+
+        .bg-orbs { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+        .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.2; animation:float 8s ease-in-out infinite; }
+        .orb1 { width:500px; height:500px; background:#9333ea; top:-200px; right:-100px; }
+        .orb2 { width:300px; height:300px; background:#06b6d4; bottom:-100px; left:-100px; animation-delay:5s; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-25px)} }
+
+        .page { position:relative; z-index:1; max-width:680px; margin:0 auto; }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.5rem; padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header-left { display: flex; align-items: center; gap: 0.75rem; }
+        .admin-badge {
+            background: linear-gradient(135deg, #9333ea, #06b6d4);
+            padding: 0.3rem 0.8rem; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .page-title { font-size: 1.4rem; font-weight: 800; }
+        .poll-id-chip {
+            font-size: 0.75rem; color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.3rem 0.8rem; border-radius: 20px;
+        }
+
+        .status-pill {
+            display: flex; align-items: center; gap: 0.4rem;
+            padding: 0.35rem 0.9rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .pill-active { background: rgba(67,233,123,0.15); border: 1px solid rgba(67,233,123,0.4); color: #43E97B; }
+        .pill-inactive { background: rgba(255,101,132,0.15); border: 1px solid rgba(255,101,132,0.4); color: #FF6584; }
+        .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.5s ease infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .section {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px; padding: 1.5rem;
+            margin-bottom: 1.2rem;
+            animation: slideUp 0.5s ease both;
+        }
+        @keyframes slideUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+
+        .section-title {
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase; color: rgba(255,255,255,0.4);
+            margin-bottom: 1rem;
+        }
+
+        .input-row { display: flex; gap: 0.6rem; }
+
+        input[type="text"] {
+            flex: 1; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px; padding: 0.75rem 1rem;
+            color: #fff; font-size: 0.9rem; outline: none;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]::placeholder { color: rgba(255,255,255,0.3); }
+        input[type="text"]:focus {
+            border-color: #9333ea;
+            box-shadow: 0 0 0 3px rgba(147,51,234,0.25);
+            background: rgba(255,255,255,0.12);
+        }
+
+        .btn {
+            padding: 0.75rem 1.4rem; border: none; border-radius: 12px;
+            cursor: pointer; font-size: 0.9rem; font-weight: 600;
+            transition: all 0.3s ease; white-space: nowrap;
+        }
+        .btn-purple {
+            background: linear-gradient(135deg, #9333ea, #a855f7);
+            color: #fff;
+        }
+        .btn-purple:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(147,51,234,0.5); }
+        .btn-cyan {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+        }
+        .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6,182,212,0.4); }
+        .btn-danger {
+            padding: 0.3rem 0.6rem; background: rgba(255,101,132,0.2);
+            border: 1px solid rgba(255,101,132,0.4); color: #FF6584;
+            border-radius: 8px; font-size: 0.75rem;
+        }
+        .btn-danger:hover { background: rgba(255,101,132,0.4); }
+
+        .current-title {
+            margin-top: 0.75rem; padding: 0.6rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px; border-left: 3px solid #9333ea;
+            font-size: 0.85rem; color: rgba(255,255,255,0.6);
+        }
+        .current-title strong { color: #fff; }
+
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .option-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease both;
+        }
+        @keyframes fadeIn { from{opacity:0;transform:translateX(-5px)} to{opacity:1;transform:translateX(0)} }
+        .option-item:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.15); }
+
+        .option-left { display: flex; align-items: center; gap: 0.75rem; }
+        .option-num {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: linear-gradient(135deg, #9333ea, #06b6d4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+        }
+        .option-text { font-size: 0.9rem; }
+        .option-votes {
+            font-size: 0.75rem; color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.07); padding: 0.15rem 0.5rem;
+            border-radius: 20px; margin-left: 0.5rem;
+        }
+
+        .no-options { color: rgba(255,255,255,0.3); font-size: 0.85rem; text-align: center; padding: 1rem; }
+
+        .alert {
+            padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 1rem;
+            font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;
+            animation: fadeIn 0.4s ease;
+        }
+        .alert-success { background: rgba(67,233,123,0.15); border: 1px solid rgba(67,233,123,0.4); color: #43E97B; }
+        .alert-error { background: rgba(255,101,132,0.15); border: 1px solid rgba(255,101,132,0.4); color: #FF6584; }
+
+        .nav-links {
+            display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;
+        }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.6rem 1.2rem; border-radius: 12px;
+            text-decoration: none; font-size: 0.85rem; font-weight: 600;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.7); transition: all 0.3s ease;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.13); color: #fff; transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+<div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+</div>
+
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <span class="admin-badge"> Admin</span>
+            <div>
+                <div class="page-title">Poll Configuration</div>
+                <div class="poll-id-chip" th:text="'ID: ' + ${pollId}"></div>
+            </div>
+        </div>
+        <div>
+            <div th:if="${initialized}" class="status-pill pill-active">
+                <div class="pill-dot"></div> Active
+            </div>
+            <div th:if="${!initialized}" class="status-pill pill-inactive">
+                <div class="pill-dot"></div> Uninitialized
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${successMsg != null}" class="alert alert-success"><span th:text="${successMsg}"></span></div>
+    <div th:if="${errorMsg != null}" class="alert alert-error"> <span th:text="${errorMsg}"></span></div>
+
+    <div class="section" style="animation-delay:0.1s">
+        <div class="section-title">Poll Title</div>
+        <form th:action="'/' + ${pollId} + '/admin/title'" method="post">
+            <div class="input-row">
+                <input type="text" name="title"
+                       th:value="${poll?.title}"
+                       placeholder="e.g. What is your favorite fruit?"/>
+                <button type="submit" class="btn btn-purple">Save Title</button>
+            </div>
+        </form>
+        <div class="current-title" th:if="${poll?.title != null and !poll.title.isBlank()}">
+            Current: <strong th:text="${poll.title}"></strong>
+        </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.2s">
+        <div class="section-title">+ Add Option</div>
+        <form th:action="'/' + ${pollId} + '/admin/option'" method="post">
+            <div class="input-row">
+                <input type="text" name="optionText" placeholder="e.g. Apple, Option B, Yes…"/>
+                <button type="submit" class="btn btn-cyan">Add Option</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="section" style="animation-delay:0.3s">
+        <div class="section-title">Current Options</div>
+        <ul class="options-list" th:if="${poll != null and !poll.options.isEmpty()}">
+            <li class="option-item" th:each="opt, i : ${poll.options}"
+                th:style="'animation-delay:' + ${i.index * 0.05} + 's'">
+                <div class="option-left">
+                    <div class="option-num" th:text="${i.index + 1}"></div>
+                    <span class="option-text" th:text="${opt.optionText}"></span>
+                    <span class="option-votes" th:text="${opt.votes} + ' votes'"></span>
+                </div>
+                <form th:action="'/' + ${pollId} + '/admin/option/' + ${opt.id} + '/delete'" method="post">
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Remove this option?')">Remove</button>
+                </form>
+            </li>
+        </ul>
+        <p class="no-options" th:if="${poll == null or poll.options.isEmpty()}">
+            No options yet. Add one above.
+        </p>
+    </div>
+
+    <div class="nav-links">
+        <a class="nav-link" th:href="'/' + ${pollId}">Widget View</a>
+        <a class="nav-link" th:href="'/' + ${pollId} + '/vote'">Vote Page</a>
+    </div>
+</div>
+</body>
+</html>
